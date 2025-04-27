@@ -65,7 +65,7 @@ def accuracy(output, target, topk=(1,)):
 
 def main():
     parser = argparse.ArgumentParser(description='CIFAR - 100 Zero - Shot Classification')
-    parser.add_argument('--arch', type=str, default='RN50', help='CLIP model architecture')
+    parser.add_argument('--arch', type=str, default='ViT-B/16', help='CLIP model architecture')
     parser.add_argument('--batch_size', type=int, default=64, help='Batch size')
     parser.add_argument('--workers', type=int, default=4, help='Number of data loading workers')
     parser.add_argument('--cw', type=float, default=0.5, help='Learning rate for weight update')
