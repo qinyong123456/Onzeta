@@ -8,8 +8,24 @@ import math
 import clip
 import argparse
 
-# 定义CIFAR - 10的类别名称
-cifar10_classes = ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
+# 定义CIFAR - 100的类别名称
+cifar100_classes = [
+    'apple', 'aquarium_fish', 'baby', 'bear', 'beaver', 'bed', 'bee', 'beetle', 
+    'bicycle', 'bottle', 'bowl', 'boy', 'bridge', 'bus', 'butterfly', 'camel', 
+    'can', 'castle', 'caterpillar', 'cattle', 'chair', 'chimpanzee', 'clock', 
+    'cloud', 'cockroach', 'couch', 'crab', 'crocodile', 'cup', 'dinosaur', 
+    'dolphin', 'elephant', 'flatfish', 'forest', 'fox', 'girl', 'hamster', 
+    'house', 'kangaroo', 'keyboard', 'lamp', 'lawn_mower', 'leopard', 'lion', 
+    'lizard', 'lobster', 'man', 'maple_tree', 'motorcycle', 'mountain', 'mouse', 
+    'mushroom', 'oak_tree', 'orange', 'orchid', 'otter', 'palm_tree', 'pear', 
+    'pickup_truck', 'pine_tree', 'plain', 'plate', 'poppy', 'porcupine',
+    'possum', 'rabbit', 'raccoon', 'ray', 'road', 'rocket', 'rose',
+    'sea', 'seal', 'shark', 'shrew', 'skunk', 'skyscraper', 'snail', 'snake',
+    'spider', 'squirrel', 'streetcar', 'sunflower', 'sweet_pepper',
+    'table', 'tank', 'telephone', 'television', 'tiger', 'tractor',
+    'train', 'trout', 'tulip', 'turtle', 'wardrobe', 'whale', 'willow_tree',
+    'wolf', 'woman', 'worm'
+]
 
 imagenet_single_template = [
     'a photo of a {}.',
@@ -24,6 +40,7 @@ imagenet_7_templates = [
     'art of the {}.',
     'a photo of the small {}.',
 ]
+
 
 def zeroshot_classifier(clip, model, classnames, templates):
     with torch.no_grad():
@@ -47,16 +64,16 @@ def accuracy(output, target, topk=(1,)):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='CIFAR - 10 Zero - Shot Classification')
-    parser.add_argument('--arch', type=str, default='RN50', help='CLIP model architecture')
+    parser = argparse.ArgumentParser(description='CIFAR - 100 Zero - Shot Classification')
+    parser.add_argument('--arch', type=str, default='ViT-B/16', help='CLIP model architecture')
     parser.add_argument('--batch_size', type=int, default=32, help='Batch size')
     parser.add_argument('--workers', type=int, default=4, help='Number of data loading workers')
     parser.add_argument('--cw', type=float, default=0.5, help='Learning rate for weight update')
-    parser.add_argument('--cr', type=float, default=20, help='Learning rate for rho update')
+    parser.add_argument('--cr', type=float, default=0.20, help='Learning rate for rho update')
     parser.add_argument('--beta', type=float, default=0.8, help='Combination coefficient')
     parser.add_argument('--tau_t', type=float, default=0.01, help='Temperature for text logits')
     parser.add_argument('--tau_i', type=float, default=0.04, help='Temperature for image logits')
-    parser.add_argument('--alpha', type=float, default=1, help='Regularization coefficient')
+    parser.add_argument('--alpha', type=float, default=0.1, help='Regularization coefficient')
     parser.add_argument('--repeat', type=int, default=5, help='Number of repetitions for online zero - shot transfer')
     args = parser.parse_args()
     print(args)
@@ -67,12 +84,12 @@ def main():
     model.eval()
 
     print('load data')
-    # 加载CIFAR - 10数据集
+    # 加载CIFAR - 100数据集
     transform = transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
     ])
-    val_set = datasets.CIFAR10(root='./data', train=False, download=True, transform=preprocess)
+    val_set = datasets.CIFAR100(root='./data', train=False, download=True, transform=preprocess)
     loader = torch.utils.data.DataLoader(val_set, batch_size=args.batch_size, num_workers=args.workers)
 
     with torch.no_grad():
@@ -90,7 +107,7 @@ def main():
     image_feat = image_feat.float()
 
     print('obtain text proxy')
-    text_classifier = zeroshot_classifier(clip, model, cifar10_classes, imagenet_7_templates)
+    text_classifier = zeroshot_classifier(clip, model, cifar100_classes, imagenet_7_templates)
     text_classifier = text_classifier.float()
     logits_t = image_feat @ text_classifier
     acc1, acc5 = accuracy(logits_t, image_label, topk=(1, 5))
@@ -133,5 +150,4 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
+    
